@@ -1,6 +1,6 @@
 {
-	"id": "drone-v.0.0.1",
-	"name": "Drone",
+	"id": "random-v.0.0.1",
+	"name": "Random",
 	"short_name": "Drone",
 	"description": "Synth tanpura for music practice",
 	"start_url": "/",
