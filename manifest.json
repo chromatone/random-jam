@@ -1,8 +1,8 @@
 {
-	"id": "random-v.0.0.1",
-	"name": "Random",
-	"short_name": "Drone",
-	"description": "Synth tanpura for music practice",
+	"id": "random-jam-v.0.1.0",
+	"name": "Jam Randomizer",
+	"short_name": "Random Jam",
+	"description": "Get unpredictable tempo and scale combinations for unique jams",
 	"start_url": "/",
 	"background_color": "#999",
 	"theme_color": "#999",
@@ -46,8 +46,14 @@
 		{
 			"src": "./screen.png",
 			"type": "image/png",
-			"sizes": "1280x1280",
+			"sizes": "1280x720",
 			"form_factor": "wide"
+		},
+		{
+			"src": "./screen-v.png",
+			"type": "image/png",
+			"sizes": "720x1280",
+			"form_factor": "narrow"
 		}
 	],
 	"launch_handler": {
