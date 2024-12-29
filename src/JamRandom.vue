@@ -1,16 +1,15 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import { globalScale, useTempo, noteColor } from 'use-chromatone'
+import { globalScale, tempo } from '#/use'
 import { useClamp } from '@vueuse/math';
 import { TransitionPresets, useTimestamp, useTransition } from '@vueuse/core'
+import { noteColor } from '#/use/colors'
 import { colord } from 'colord';
+import { useData } from 'vitepress'
+const { isDark } = useData()
 
-import ChromaKeys from './ChromaKeys.vue'
-
-const tempo = useTempo()
-
-var meanTempo = 102;
-var stdDevTempo = 20;
+var meanTempo = 102; // Среднее значение темпа
+var stdDevTempo = 20; // Стандартное отклонение темпа
 
 function randomNormalDistribution(mean, stdDev) {
   let u = 1 - Math.random()
@@ -18,6 +17,7 @@ function randomNormalDistribution(mean, stdDev) {
   var normalDistribution = Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
   return mean + stdDev * normalDistribution;
 }
+
 
 const output = useTransition(() => tempo.bpm, {
   duration: 1000,
@@ -45,13 +45,14 @@ function randomize() {
 
 }
 
-const position = computed(() => tempo?.position?.split(':').map(Number))
+
+const position = computed(() => tempo.position?.split(':').map(Number))
 
 const progress = computed(() => position.value?.[0] / limitMeasures.value)
 
-const tempoColor = computed(() => colord(tempo?.color).lighten(.3).desaturate(0.2).toHex())
+const tempoColor = computed(() => colord(tempo.color).lighten(!isDark.value ? .3 : 0).desaturate(0.2).toHex())
 
-const tonicColor = computed(() => colord(noteColor(globalScale.tonic)).lighten(.3).desaturate(0.2).toHex())
+const tonicColor = computed(() => colord(noteColor(globalScale.tonic)).lighten(!isDark.value ? .3 : 0).desaturate(0.2).toHex())
 
 const colorMix = computed(() => colord(tempoColor.value).mix(tonicColor.value).toHex())
 
@@ -60,9 +61,10 @@ const getMinutesSeconds = (decimalMinutes) => [Math.floor(decimalMinutes), Math.
 const getMillisecondsFromMinutes = (decimalMinutes) => Math.round(decimalMinutes * 60 * 1000);
 
 
-const duration = computed(() => getMinutesSeconds(limitMeasures.value * 4 / tempo?.bpm))
 
-const dist = computed(() => getMillisecondsFromMinutes(limitMeasures.value * 4 / tempo?.bpm))
+const duration = computed(() => getMinutesSeconds(limitMeasures.value * 4 / tempo.bpm))
+
+const dist = computed(() => getMillisecondsFromMinutes(limitMeasures.value * 4 / tempo.bpm))
 
 const finishAt = computed(() => startedAt.value + dist.value)
 
@@ -110,8 +112,8 @@ const started = ref(false)
 
       .bg-dark-400.transition.duration-300.top-0.bottom-0.left-0.absolute.flex.items-center(:style="{ backgroundColor: colorMix, width: `${progress * 100}%` }")
 
-    .flex.flex-wrap.gap-4.text-center.relative.items-stretch.justify-stretch.mb-8(v-if="position")
-      .flex.flex-col.gap-2.w-full
+    .flex.flex-wrap.gap-4.text-center.relative.items-center.justify-stretch.mb-8
+      .flex.flex-col.gap-2.w-full.max-h-30vh
         .flex.flex-col.gap-2.w-full
           .flex.gap-2.w-full
             .p-1.bit(v-for="i in 4" :style="{ backgroundColor: i - 1 == position[1] ? tempoColor : 'transparent' }")
@@ -134,41 +136,15 @@ const started = ref(false)
       :chroma="globalScale.chroma"
       :pitch="globalScale.tonic")
 
+    .flex-0
+
+
+
 
 </template>
 
-<style lang="postcss">
+<style scoped lang="postcss">
 .bit {
   @apply flex-1 transition ease-in-out rounded-lg border-1 border-dark-100 border-op-20 dark-border-light-900 dark-border-op-30
-}
-
-#app {
-  @apply w-full h-full;
-}
-
-a {
-  @apply underline;
-}
-
-body {
-  @apply flex items-stretch justify-stretch h-100svh;
-  background-color: black;
-  width: 100%;
-  min-width: 320px;
-  min-height: 100vh;
-  line-height: 1.3;
-  font-family: "Commissioner", -apple-system, BlinkMacSystemFont, "Segoe UI",
-    Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans",
-    "Helvetica Neue", sans-serif;
-  font-size: 1em;
-  font-weight: 400;
-  color: var(--c-text);
-  direction: ltr;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  overscroll-behavior: none;
-  overflow: hidden;
 }
 </style>
