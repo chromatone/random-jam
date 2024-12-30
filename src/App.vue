@@ -1,11 +1,13 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import { globalScale, useTempo, noteColor } from 'use-chromatone'
+import { globalScale, useTempo, noteColor, useSoundFont } from 'use-chromatone'
 import { useClamp } from '@vueuse/math';
 import { TransitionPresets, useTimestamp, useTransition } from '@vueuse/core'
 import { colord } from 'colord';
 
 import ChromaKeys from './ChromaKeys.vue'
+
+useSoundFont()
 
 const tempo = useTempo()
 
@@ -149,9 +151,28 @@ const started = ref(false)
       )
       .absolute.left-2.z-10.top-2 {{ fromStart.filter(Boolean).join(' m ') || 0 }} s
       .absolute.right-2.z-10.top-2 -{{ tillFinish.filter(Boolean).join(' m ') || 0 }} s
+      svg.w-full.bottom-0.absolute.z-100(viewBox="0 0 80 20" xmlns="http://www.w3.org/2000/svg")
+        g(stroke="#3336" stroke-width=".25")
+          line(x1="40" x2="40"  y1="0" y2="20")
+
+          line(x1="20" x2="20"  y1="5" y2="20")
+          line(x1="60" x2="60"  y1="5" y2="20")
+
+          line(x1="10" x2="10"  y1="10" y2="20")
+          line(x1="30" x2="30"  y1="10" y2="20")
+          line(x1="50" x2="50"  y1="10" y2="20")
+          line(x1="70" x2="70"  y1="10" y2="20")
+
+          line(x1="5" x2="5"  y1="15" y2="20")
+          line(x1="15" x2="15"  y1="15" y2="20")
+          line(x1="25" x2="25"  y1="15" y2="20")
+          line(x1="35" x2="35"  y1="15" y2="20")
+          line(x1="45" x2="45"  y1="15" y2="20")
+          line(x1="55" x2="55"  y1="15" y2="20")
+          line(x1="65" x2="65"  y1="15" y2="20")
+          line(x1="75" x2="75"  y1="15" y2="20")
 
       .bg-dark-400.transition.duration-300.top-0.bottom-0.left-0.absolute.flex.items-center(:style="{ backgroundColor: colord(colorMix).darken(.1).toHex(), width: `${progress * 100}%` }")
-    .flex-1
 </template>
 
 <style lang="postcss">

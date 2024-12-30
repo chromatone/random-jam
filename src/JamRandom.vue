@@ -8,8 +8,8 @@ import { colord } from 'colord';
 import { useData } from 'vitepress'
 const { isDark } = useData()
 
-var meanTempo = 102; // Среднее значение темпа
-var stdDevTempo = 20; // Стандартное отклонение темпа
+var meanTempo = 102
+var stdDevTempo = 100
 
 function randomNormalDistribution(mean, stdDev) {
   let u = 1 - Math.random()
