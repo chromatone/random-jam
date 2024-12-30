@@ -95,7 +95,7 @@ const started = ref(false)
   :style="{ backgroundImage: `linear-gradient(${colord(colorMix).alpha(.1).toHex()}, ${colord(colorMix).alpha(.9).toHex()})` }")
     .flex.w-full.items-center
       .flex.flex-col
-        .text-sm.font-bold.op-40.hover-op-100.transition Chromatone
+        a.no-underline.text-sm.font-bold.op-40.hover-op-100.transition(href="https://chromatone.center/" target="_blank") Chromatone
         .text-4xl.font-thin RANDOM JAM
       .flex-1
       button.transition.duration-1000.bg-dark-400.p-4.rounded-full.shadow-xl.flex.gap-2(@click="randomize()" :style="{ backgroundColor: colorMix }" title="Randomize" aria-label="Randomize")
