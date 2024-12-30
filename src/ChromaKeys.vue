@@ -53,7 +53,7 @@ function keyColor(key, off) {
   @pointerup="playAll && nextTick(stopChroma(chroma, pitch))"
   @pointerleave="playAll && nextTick(stopChroma(chroma, pitch))"
   @pointerout="playAll && nextTick(stopChroma(chroma, pitch))"
-  :style="{ backgroundColor: keys.color.lch }"
+
   )
   svg.w-full#chroma-keys(
     version="1.1",
@@ -70,6 +70,7 @@ function keyColor(key, off) {
     defs
       filter#shadowButton(x="-50%" height="200%" width="300%")
         feDropShadow(dx="0" dy="3" stdDeviation="4" flood-color="#2225")
+    rect(width="710" height="150" x="-5" y="-20" rx="20" :fill="keys.color.lch" style="filter:url(#shadowButton);")
     g.white
       g.key(
         v-for="(key, k) in keys.white" :key="key"

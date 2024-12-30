@@ -27,7 +27,7 @@ function viteBuildScript() {
     name: 'vite-build-script',
     transformIndexHtml(html) {
       if (process.env.NODE_ENV === 'production') {
-        return html.replace(/<!-- Stats production build insert -->/, `<script async defer src="https://stats.chromatone.center/script.js" data-website-id="5f20daa8-3866-42a6-a0e5-e66ebb70db0e"></script>
+        return html.replace(/<!-- Stats production build insert -->/, `<script async defer src="https://stats.chromatone.center/script.js" data-website-id="47263d8d-f9ff-4796-a6b7-447c4daf5e75"></script>
           
           <script>
     if ('serviceWorker' in navigator) {
