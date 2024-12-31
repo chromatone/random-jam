@@ -14,6 +14,9 @@ importers:
       '@vueuse/core':
         specifier: ^12.2.0
         version: 12.2.0
+      '@vueuse/gesture':
+        specifier: ^2.0.0
+        version: 2.0.0(vue@3.5.13)
       '@vueuse/math':
         specifier: ^12.2.0
         version: 12.2.0
@@ -1654,10 +1657,6 @@ packages:
 
   confusing-browser-globals@1.0.11:
     resolution: {integrity: sha512-JsPKdmh8ZkmnHxDk55FZ1TqVLvEQTvoByJZRN9jzI0UjxK/QgAmsphz7PGtqgPieQZ/CQcHWXCR7ATDNhGe+YA==}
-
-  consola@3.2.3:
-    resolution: {integrity: sha512-I5qxpzLv+sJhTVEoLYNcTW+bThDCPsit0vLNKShZx6rLtpilNpmmeTPaeqJb9ZE9dV3DGaeby6Vuhrw38WjeyQ==}
-    engines: {node: ^14.18.0 || >=16.10.0}
 
   consola@3.3.3:
     resolution: {integrity: sha512-Qil5KwghMzlqd51UXM0b6fyaGHtOC22scxrwrz4A2882LyUMwQjnvaedN1HAeXzphspQ6CpHkzMAWxBTUruDLg==}
@@ -4642,7 +4641,7 @@ snapshots:
   '@vueuse/gesture@2.0.0(vue@3.5.13)':
     dependencies:
       chokidar: 3.6.0
-      consola: 3.2.3
+      consola: 3.3.3
       upath: 2.0.1
       vue: 3.5.13
       vue-demi: 0.14.10(vue@3.5.13)
@@ -5039,8 +5038,6 @@ snapshots:
   confbox@0.1.8: {}
 
   confusing-browser-globals@1.0.11: {}
-
-  consola@3.2.3: {}
 
   consola@3.3.3: {}
 

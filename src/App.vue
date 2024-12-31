@@ -6,12 +6,14 @@ import { TransitionPresets, useTimestamp, useTransition } from '@vueuse/core'
 import { colord } from 'colord';
 
 import ChromaKeys from './ChromaKeys.vue'
+import { ScaleType } from 'tonal';
+import { useGesture } from '@vueuse/gesture';
 
 useSoundFont()
 
 const tempo = useTempo()
 
-var meanTempo = 102;
+var meanTempo = 110;
 var stdDevTempo = 20;
 
 function randomNormalDistribution(mean, stdDev) {
@@ -28,15 +30,22 @@ const output = useTransition(() => tempo.bpm, {
 
 const spin = ref(false)
 const startedAt = ref(Date.now())
-const limitMeasures = useClamp(256, 64, 1024)
+const limitMeasures = useClamp(256, 16, 1024)
+
+const scales = ScaleType.all()
+const seed = ref(Math.random())
+const randomScale = computed(() => scales[Math.floor(seed.value * scales.length)])
 
 function randomize() {
   if (spin.value) return
   tempo.stopped = true
-
   spin.value = true
+
   tempo.bpm = Math.round(randomNormalDistribution(meanTempo, stdDevTempo));
-  globalScale.chroma = Math.random() > .7 ? "101011010101" : "101101011010"
+
+  seed.value = Math.random()
+
+  globalScale.chroma = seed.value < 0.1 ? randomScale.value?.chroma : seed.value > .3 ? scales.find(s => s.name == 'minor').chroma : scales.find(s => s.name == 'major').chroma
   globalScale.tonic = Math.round(Math.random() * 12)
 
   setTimeout(() => {
@@ -61,7 +70,6 @@ const getMinutesSeconds = (decimalMinutes) => [Math.floor(decimalMinutes), Math.
 
 const getMillisecondsFromMinutes = (decimalMinutes) => Math.round(decimalMinutes * 60 * 1000);
 
-
 const duration = computed(() => getMinutesSeconds(limitMeasures.value * 4 / tempo?.bpm))
 
 const dist = computed(() => getMillisecondsFromMinutes(limitMeasures.value * 4 / tempo?.bpm))
@@ -81,6 +89,17 @@ watch(now, n => {
 })
 
 const started = ref(false)
+
+const timebar = ref()
+
+useGesture({
+  onDrag(ev) {
+    limitMeasures.value += ev.delta[0]
+  }
+}, {
+  domTarget: timebar
+})
+
 
 </script>
 
@@ -146,31 +165,20 @@ const started = ref(false)
           :pitch="globalScale.tonic")
 
 
-    .overflow-clip.rounded-2xl.flex.items-center.border-8.relative.bg-light-900.bg-op-40.py-6.text-4xl.font-thin.flex-1(
+    .overflow-clip.rounded-2xl.flex.flex-col.items-center.border-8.relative.bg-light-900.bg-op-40.py-6.text-4xl.font-thin.flex-1.cursor-grab.active-cursor-grabbing(
+      ref="timebar"
       :style="{ borderColor: colorMix }"
       )
-      .absolute.left-2.z-10.top-2 {{ fromStart.filter(Boolean).join(' m ') || 0 }} s
-      .absolute.right-2.z-10.top-2 -{{ tillFinish.filter(Boolean).join(' m ') || 0 }} s
+      .absolute.left-2.z-10.top-2  {{ fromStart.filter(Boolean).join('m ') || 0 }}s
+      .absolute.mx-auto.z-10.top-2.text-center.text-lg.font-normal.flex.flex-col 
+        .p-0 {{ limitMeasures }} bars
+        .p-0 {{ duration.filter(Boolean).join('m ') || 0 }}s
+
+      .absolute.right-2.z-10.top-2 -{{ tillFinish.filter(Boolean).join('m ') || 0 }}s
       svg.w-full.bottom-0.absolute.z-100(viewBox="0 0 80 20" xmlns="http://www.w3.org/2000/svg")
         g(stroke="#3336" stroke-width=".25")
-          line(x1="40" x2="40"  y1="0" y2="20")
-
-          line(x1="20" x2="20"  y1="5" y2="20")
-          line(x1="60" x2="60"  y1="5" y2="20")
-
-          line(x1="10" x2="10"  y1="10" y2="20")
-          line(x1="30" x2="30"  y1="10" y2="20")
-          line(x1="50" x2="50"  y1="10" y2="20")
-          line(x1="70" x2="70"  y1="10" y2="20")
-
-          line(x1="5" x2="5"  y1="15" y2="20")
-          line(x1="15" x2="15"  y1="15" y2="20")
-          line(x1="25" x2="25"  y1="15" y2="20")
-          line(x1="35" x2="35"  y1="15" y2="20")
-          line(x1="45" x2="45"  y1="15" y2="20")
-          line(x1="55" x2="55"  y1="15" y2="20")
-          line(x1="65" x2="65"  y1="15" y2="20")
-          line(x1="75" x2="75"  y1="15" y2="20")
+          g(v-for="bar in limitMeasures" :key="bar")
+            line(:transform="`translate(${bar * 80 / limitMeasures} 0)`" :y1="bar % 128 == 0 ? 6 : bar % 64 == 0 ? 8 : bar % 32 == 0 ? 10 : bar % 16 == 0 ? 12 : bar % 8 == 0 ? 14 : bar % 4 == 0 ? 16 : 18" y2="20")
 
       .bg-dark-400.transition.duration-300.top-0.bottom-0.left-0.absolute.flex.items-center(:style="{ backgroundColor: colord(colorMix).darken(.1).toHex(), width: `${progress * 100}%` }")
 </template>
@@ -181,7 +189,7 @@ const started = ref(false)
 }
 
 #app {
-  @apply w-full h-full;
+  @apply w-full h-full overflow-scroll overscroll-none select-none;
 }
 
 a {
@@ -189,8 +197,8 @@ a {
 }
 
 body {
-  @apply flex items-stretch justify-stretch h-100svh;
-  background-color: black;
+  @apply flex items-stretch justify-stretch h-100svh overscroll-none;
+  background-color: #9988aa;
   width: 100%;
   min-width: 320px;
   min-height: 100vh;
