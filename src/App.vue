@@ -91,6 +91,7 @@ watch(now, n => {
 const started = ref(false)
 
 const timebar = ref()
+const tempobar = ref()
 
 useGesture({
   onDrag(ev) {
@@ -98,6 +99,14 @@ useGesture({
   }
 }, {
   domTarget: timebar
+})
+
+useGesture({
+  onDrag(ev) {
+    tempo.volume -= ev.delta[1] / 10
+  }
+}, {
+  domTarget: tempobar
 })
 
 
@@ -127,11 +136,13 @@ useGesture({
     .flex.flex-wrap.items-stretch.justify-between.gap-4
 
       .tabular-nums.rounded-xl.p-2.shadow.flex.flex-col.gap-2(
+        @click="tempo.mute = !tempo.mute"
+        ref="tempobar"
         style="flex: 1 0 300px"
         :style="{ backgroundColor: tempoColor }"
         ) 
         .text-6xl.py-2.font-thin {{ output.toFixed() }} BPM
-          span.transition(:style="{ opacity: tempo.blink ? '1' : '0' }") •
+          span.transition(:style="{ opacity: tempo.blink ? tempo.volume : '0' }") •
         .flex.flex-wrap.gap-4.text-center.relative.items-stretch.justify-stretch.flex-1.rounded-lg.bg-light-900.p-2(v-if="position")
           .flex.flex-col.gap-2.w-full
             .flex.flex-col.gap-2.w-full.h-full
