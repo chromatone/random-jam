@@ -5,11 +5,13 @@ import { useClamp } from '@vueuse/math';
 import { TransitionPresets, useTimestamp, useTransition } from '@vueuse/core'
 import { colord } from 'colord';
 
+import { version } from '../package.json'
+
 import ChromaKeys from './ChromaKeys.vue'
 import { ScaleType } from 'tonal';
 import { useGesture } from '@vueuse/gesture';
 
-useSoundFont()
+const { synthEnabled } = useSoundFont()
 
 const tempo = useTempo()
 
@@ -36,7 +38,7 @@ const scales = ScaleType.all()
 const seed = ref(Math.random())
 const randomScale = computed(() => scales[Math.floor(seed.value * scales.length)])
 
-function randomize() {
+function randomize(delay = 1000) {
   if (spin.value) return
   tempo.stopped = true
   spin.value = true
@@ -52,7 +54,7 @@ function randomize() {
     spin.value = false;
     tempo.playing = true
     startedAt.value = Date.now()
-  }, 1000)
+  }, delay)
 
 }
 
@@ -95,7 +97,7 @@ const tempobar = ref()
 
 useGesture({
   onDrag(ev) {
-    limitMeasures.value += ev.delta[0]
+    limitMeasures.value = Math.round(limitMeasures.value + ev.delta[0])
   }
 }, {
   domTarget: timebar
@@ -113,20 +115,17 @@ useGesture({
 </script>
 
 <template lang="pug">
-//- #overlay.p-4.z-100.absolute.top-4.bottom-4.left-4.right-4.bg-light-300.bg-op-50.backdrop-blur.rounded-lg.shadow(v-if="!started")
-  .flex.w-full.items-center
-    .flex.flex-col
-      .text-lg.font-bold.op-40.hover-op-100.transition Chromatone
-      .text-4rem.font-thin RANDOM JAM
-    .flex-1
-  button.p-4.bg-green(@click="started = true")
 #screen.bg-light-900.dark-bg-dark-800
   .flex.flex-col.gap-4.p-4.justify-stretch.relative.items-stretch.min-h-100vh.transition.duration-1000(
   :style="{ backgroundImage: `linear-gradient(${colord(colorMix).alpha(.1).toHex()}, ${colord(colorMix).alpha(.9).toHex()})` }")
     .flex.w-full.items-center
       .flex.flex-col
-        a.no-underline.text-sm.font-bold.op-40.hover-op-100.transition(href="https://chromatone.center/" target="_blank") Chromatone
-        .text-4xl.font-thin RANDOM JAM
+        a.flex.items-center.gap-1.no-underline.text-sm.font-bold.op-40.hover-op-100.transition(href="https://chromatone.center/" target="_blank") 
+          img.w-4(src="/logo.svg")
+          .p-0 Chromatone
+        .flex.items-baseline.gap-2
+          .text-4xl.font-thin RANDOM JAM
+          a.no-underline.op-50.hover-op-90.transition.text-sm(href="https://github.com/chromatone/random-jam/" target="_blank") v.{{ version }}
       .flex-1
       button.transition.duration-1000.bg-dark-400.p-4.rounded-full.shadow-xl.flex.gap-2(@click="randomize()" :style="{ backgroundColor: colorMix }" title="Randomize" aria-label="Randomize")
         .p-0(:class="{ 'animate-spin': spin }")
@@ -136,13 +135,17 @@ useGesture({
     .flex.flex-wrap.items-stretch.justify-between.gap-4
 
       .tabular-nums.rounded-xl.p-2.shadow.flex.flex-col.gap-2(
-        @click="tempo.mute = !tempo.mute"
         ref="tempobar"
         style="flex: 1 0 300px"
         :style="{ backgroundColor: tempoColor }"
         ) 
-        .text-6xl.py-2.font-thin {{ output.toFixed() }} BPM
-          span.transition(:style="{ opacity: tempo.blink ? tempo.volume : '0' }") •
+        .flex.items-center.py-2.font-thin.gap-1 
+          .text-6xl {{ output.toFixed() }}&nbsp;BPM
+          .p-1.transition.rounded-full.bg-dark-200(:style="{ opacity: tempo.blink ? tempo.volume : '0' }")
+          .flex-1
+          button.text-2xl.p-2.op-30.hover-op-50.active-op-100.transition(@click="tempo.mute = !tempo.mute")
+            .i-hugeicons-volume-high(v-if="!tempo.mute")
+            .i-hugeicons-volume-off(v-else)
         .flex.flex-wrap.gap-4.text-center.relative.items-stretch.justify-stretch.flex-1.rounded-lg.bg-light-900.p-2(v-if="position")
           .flex.flex-col.gap-2.w-full
             .flex.flex-col.gap-2.w-full.h-full
@@ -169,6 +172,10 @@ useGesture({
         ) 
         .flex.items-baseline.gap-1
           .text-6xl.font-thin.m-4 {{ globalScale.note.name }}  {{ globalScale?.set?.name }}
+          .flex-1 
+          button.text-2xl.p-2.px-4.op-30.hover-op-50.active-op-100.transition(@click="synthEnabled = !synthEnabled")
+            .i-hugeicons-volume-high(v-if="synthEnabled")
+            .i-hugeicons-volume-off(v-else)
         .flex-1
         chroma-keys.m-2(
           :title="false"
@@ -187,7 +194,7 @@ useGesture({
 
       .absolute.right-2.z-10.top-2 -{{ tillFinish.filter(Boolean).join('m ') || 0 }}s
       svg.w-full.bottom-0.absolute.z-100(viewBox="0 0 80 20" xmlns="http://www.w3.org/2000/svg")
-        g(stroke="#3336" stroke-width=".25")
+        g(stroke="#3336" stroke-width=".1")
           g(v-for="bar in limitMeasures" :key="bar")
             line(:transform="`translate(${bar * 80 / limitMeasures} 0)`" :y1="bar % 128 == 0 ? 6 : bar % 64 == 0 ? 8 : bar % 32 == 0 ? 10 : bar % 16 == 0 ? 12 : bar % 8 == 0 ? 14 : bar % 4 == 0 ? 16 : 18" y2="20")
 
