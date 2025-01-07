@@ -124,7 +124,7 @@ useGesture({
           img.w-4(src="/logo.svg")
           .p-0 Chromatone
         .flex.items-baseline.gap-2
-          .text-4xl.font-thin RANDOM JAM
+          .text-4xl.font-bold RANDOM JAM
           a.no-underline.op-50.hover-op-90.transition.text-sm(href="https://github.com/chromatone/random-jam/" target="_blank") v.{{ version }}
       .flex-1
       button.transition.duration-1000.bg-dark-400.p-4.rounded-full.shadow-xl.flex.gap-2(@click="randomize()" :style="{ backgroundColor: colorMix }" title="Randomize" aria-label="Randomize")
@@ -139,7 +139,7 @@ useGesture({
         style="flex: 1 0 300px"
         :style="{ backgroundColor: tempoColor }"
         ) 
-        .flex.items-center.py-2.font-thin.gap-1 
+        .flex.items-center.py-2.font-bold.gap-1 
           .text-6xl {{ output.toFixed() }}&nbsp;BPM
           .p-1.transition.rounded-full.bg-dark-200(:style="{ opacity: tempo.blink ? tempo.volume : '0' }")
           .flex-1
@@ -171,7 +171,7 @@ useGesture({
         :style="{ backgroundColor: tonicColor }"
         ) 
         .flex.items-baseline.gap-1
-          .text-6xl.font-thin.m-4 {{ globalScale.note.name }}  {{ globalScale?.set?.name }}
+          .text-6xl.font-bold.m-4 {{ globalScale.note.name }}  {{ globalScale?.set?.name }}
           .flex-1 
           button.text-2xl.p-2.px-4.op-30.hover-op-50.active-op-100.transition(@click="synthEnabled = !synthEnabled")
             .i-hugeicons-volume-high(v-if="synthEnabled")
@@ -183,7 +183,7 @@ useGesture({
           :pitch="globalScale.tonic")
 
 
-    .overflow-clip.rounded-2xl.flex.flex-col.items-center.border-8.relative.bg-light-900.bg-op-40.py-6.text-4xl.font-thin.flex-1.cursor-grab.active-cursor-grabbing(
+    .overflow-clip.rounded-2xl.flex.flex-col.items-center.border-8.relative.bg-light-900.bg-op-40.py-6.text-4xl.font-bold.flex-1.cursor-grab.active-cursor-grabbing(
       ref="timebar"
       :style="{ borderColor: colorMix }"
       )
