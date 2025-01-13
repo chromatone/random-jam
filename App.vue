@@ -5,13 +5,13 @@ import { useClamp } from '@vueuse/math';
 import { TransitionPresets, useTimestamp, useTransition } from '@vueuse/core'
 import { colord } from 'colord';
 
-import { version } from '../package.json'
+import { version } from './package.json'
 
-import ChromaKeys from './ChromaKeys.vue'
+import ChromaKeys from './src/ChromaKeys.vue'
 import { ScaleType } from 'tonal';
 import { useGesture } from '@vueuse/gesture';
 
-const { synthEnabled } = useSoundFont()
+const { synthEnabled, volume } = useSoundFont()
 
 const tempo = useTempo()
 
@@ -90,26 +90,24 @@ watch(now, n => {
   }
 })
 
-const started = ref(false)
-
 const timebar = ref()
-const tempobar = ref()
-
 useGesture({
-  onDrag(ev) {
-    limitMeasures.value = Math.round(limitMeasures.value + ev.delta[0])
-  }
+  onDrag: (ev) => limitMeasures.value = Math.round(limitMeasures.value + ev.delta[0])
 }, {
   domTarget: timebar
 })
 
+const tempobar = ref()
 useGesture({
-  onDrag(ev) {
-    tempo.volume -= ev.delta[1] / 10
-  }
-}, {
-  domTarget: tempobar
-})
+  onDrag: (ev) => tempo.volume -= ev.delta[1] / 50,
+  onWheel: (ev) => { ev.event.preventDefault(); tempo.volume += ev.delta[1] / 100 }
+}, { domTarget: tempobar, eventOptions: { passive: false } })
+
+const synthVolume = ref()
+useGesture({
+  onDrag: (ev) => volume.value -= ev.delta[1] / 50,
+  onWheel: (ev) => { ev.event.preventDefault(); volume.value += ev.delta[1] / 100 }
+}, { domTarget: synthVolume, eventOptions: { passive: false } })
 
 
 </script>
@@ -119,10 +117,17 @@ useGesture({
   .flex.flex-col.gap-4.p-4.justify-stretch.relative.items-stretch.min-h-100vh.transition.duration-1000(
   :style="{ backgroundImage: `linear-gradient(${colord(colorMix).alpha(.1).toHex()}, ${colord(colorMix).alpha(.9).toHex()})` }")
     .flex.w-full.items-center
-      .flex.flex-col
-        a.flex.items-center.gap-1.no-underline.text-sm.font-bold.op-40.hover-op-100.transition(href="https://chromatone.center/" target="_blank") 
-          img.w-4(src="/logo.svg")
-          .p-0 Chromatone
+      .flex.flex-col.gap-2
+        .flex.items-center
+          a.flex.items-center.gap-1.no-underline.text-sm.font-bold.op-40.hover-op-100.transition(href="https://chromatone.center/" target="_blank") 
+            img.w-4(src="/logo.svg")
+            .p-0.-mt-1px Chromatone
+          .op-30.mx-2
+            .i-la-times
+          a.flex.items-center.gap-1.no-underline.text-sm.font-bold.op-40.hover-op-100.transition(href="https://102records.ru/" target="_blank") 
+            img.w-20(src="/102_logo_black.svg")
+
+
         .flex.items-baseline.gap-2
           .text-4xl.font-bold RANDOM JAM
           a.no-underline.op-50.hover-op-90.transition.text-sm(href="https://github.com/chromatone/random-jam/" target="_blank") v.{{ version }}
@@ -135,14 +140,16 @@ useGesture({
     .flex.flex-wrap.items-stretch.justify-between.gap-4
 
       .tabular-nums.rounded-xl.p-2.shadow.flex.flex-col.gap-2(
-        ref="tempobar"
         style="flex: 1 0 300px"
         :style="{ backgroundColor: tempoColor }"
         ) 
         .flex.items-center.py-2.font-bold.gap-1 
-          .text-6xl {{ output.toFixed() }}&nbsp;BPM
+          .text-6xl.op-80 {{ output.toFixed() }}&nbsp;BPM
           .p-1.transition.rounded-full.bg-dark-200(:style="{ opacity: tempo.blink ? tempo.volume : '0' }")
           .flex-1
+          .op-90.w-6.overflow-hidden.h-full.rounded-full.relative.border-2.border-dark-300.border-op-40.cursor-grab.active-cursor-grabbing(ref="tempobar")
+            .absolute.bottom-0.right-0.left-0.top-0.bg-dark-200.origin-bottom(:style="{transform:`scaleY(${tempo.volume})`}")
+
           button.text-2xl.p-2.op-30.hover-op-50.active-op-100.transition(@click="tempo.mute = !tempo.mute")
             .i-hugeicons-volume-high(v-if="!tempo.mute")
             .i-hugeicons-volume-off(v-else)
@@ -170,9 +177,11 @@ useGesture({
         style="flex: 1 0 300px"
         :style="{ backgroundColor: tonicColor }"
         ) 
-        .flex.items-baseline.gap-1
-          .text-6xl.font-bold.m-4 {{ globalScale.note.name }}  {{ globalScale?.set?.name }}
+        .flex.items-center.gap-1
+          .text-6xl.font-bold.m-4.op-80 {{ globalScale.note.name }}  {{ globalScale?.set?.name }}
           .flex-1 
+          .op-90.w-6.overflow-hidden.h-full.max-h-16.rounded-full.relative.border-2.border-dark-300.border-op-40.cursor-grab.active-cursor-grabbing(ref="synthVolume")
+            .absolute.bottom-0.right-0.left-0.top-0.bg-dark-200.origin-bottom(:style="{transform:`scaleY(${volume})`}")
           button.text-2xl.p-2.px-4.op-30.hover-op-50.active-op-100.transition(@click="synthEnabled = !synthEnabled")
             .i-hugeicons-volume-high(v-if="synthEnabled")
             .i-hugeicons-volume-off(v-else)
