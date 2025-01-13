@@ -125,7 +125,7 @@ useGesture({
           .op-30.mx-2
             .i-la-times
           a.flex.items-center.gap-1.no-underline.text-sm.font-bold.op-40.hover-op-100.transition(href="https://102records.ru/" target="_blank") 
-            img.w-20(src="/102_logo_black.svg")
+            img.w-20(src="/102_logo.svg")
 
 
         .flex.items-baseline.gap-2
