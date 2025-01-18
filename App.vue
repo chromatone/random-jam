@@ -1,34 +1,18 @@
 <script setup>
+import ChromaKeys from './components/ChromaKeys.vue'
+import SplashScreen from './components/SplashScreen.vue'
+
 import { computed, onMounted, ref, watch } from 'vue'
-import { globalScale, useTempo, noteColor, useSoundFont } from 'use-chromatone'
-import { useClamp } from '@vueuse/math';
-import { TransitionPresets, useTimestamp, useTransition } from '@vueuse/core'
-import { colord } from 'colord';
+import { useClamp } from '@vueuse/math'
+import { useTimestamp } from '@vueuse/core'
+import { globalScale, useTempo, noteColor, } from 'use-chromatone'
 
-import { version } from './package.json'
-
-import ChromaKeys from './src/ChromaKeys.vue'
-import { ScaleType } from 'tonal';
-import { useGesture } from '@vueuse/gesture';
-
-const { synthEnabled, volume } = useSoundFont()
+import { ScaleType } from 'tonal'
 
 const tempo = useTempo()
 
-var meanTempo = 110;
-var stdDevTempo = 20;
-
-function randomNormalDistribution(mean, stdDev) {
-  let u = 1 - Math.random()
-  let v = 1 - Math.random()
-  var normalDistribution = Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
-  return mean + stdDev * normalDistribution;
-}
-
-const output = useTransition(() => tempo.bpm, {
-  duration: 1000,
-  transition: TransitionPresets.easeInOutCubic,
-})
+const minTempo = useClamp(70, 30, 100)
+const maxTempo = useClamp(140, minTempo, 200)
 
 const spin = ref(false)
 const startedAt = ref(Date.now())
@@ -43,7 +27,7 @@ function randomize(delay = 1000) {
   tempo.stopped = true
   spin.value = true
 
-  tempo.bpm = Math.round(randomNormalDistribution(meanTempo, stdDevTempo));
+  tempo.bpm = Math.round(Math.random() * (maxTempo.value - minTempo.value) + minTempo.value)
 
   seed.value = Math.random()
 
@@ -58,15 +42,11 @@ function randomize(delay = 1000) {
 
 }
 
+const now = useTimestamp()
+
 const position = computed(() => tempo?.position?.split(':').map(Number))
 
 const progress = computed(() => position.value?.[0] / limitMeasures.value)
-
-const tempoColor = computed(() => colord(noteColor(tempo.pitch, 2, .6)).lighten(.3).desaturate(0.2).toHex())
-
-const tonicColor = computed(() => colord(noteColor(globalScale.tonic, 2, .6)).lighten(.3).desaturate(0.2).toHex())
-
-const colorMix = computed(() => colord(tempoColor.value).mix(tonicColor.value).toHex())
 
 const getMinutesSeconds = (decimalMinutes) => [Math.floor(decimalMinutes), Math.round((decimalMinutes - Math.floor(decimalMinutes)) * 60)];
 
@@ -78,64 +58,59 @@ const dist = computed(() => getMillisecondsFromMinutes(limitMeasures.value * 4 /
 
 const finishAt = computed(() => startedAt.value + dist.value)
 
-const now = useTimestamp()
-
 const fromStart = computed(() => [Math.floor((now.value - startedAt.value) / (1000 * 60)), Math.round(((now.value - startedAt.value) % (1000 * 60)) / 1000)])
 
 const tillFinish = computed(() => [Math.floor((finishAt.value - now.value) / (1000 * 60)), Math.round(((finishAt.value - now.value) % (1000 * 60)) / 1000)])
 
-watch(now, n => {
-  if (n > finishAt.value) {
-    randomize()
-  }
+watch(now, n => n > finishAt.value && (tempo.playing = false))
+
+import { colord } from 'colord'
+
+const tempoColor = computed(() => colord(noteColor(tempo.pitch, 2, .6)).lighten(.3).desaturate(0.2).toHex())
+
+const tonicColor = computed(() => colord(noteColor(globalScale.tonic, 2, .6)).lighten(.3).desaturate(0.2).toHex())
+
+const colorMix = computed(() => colord(tempoColor.value).mix(tonicColor.value).toHex())
+
+
+import { TransitionPresets, useTransition } from '@vueuse/core'
+
+const smoothBPM = useTransition(() => tempo.bpm, {
+  duration: 1000,
+  transition: TransitionPresets.easeInOutCubic,
 })
+
+import { useSoundFont } from 'use-chromatone'
+
+const { synthEnabled, volume } = useSoundFont()
+
+import { useGesture } from '@vueuse/gesture'
+import BeatBars from './components/BeatBars.vue'
+import ControlRotary from './components/ControlRotary.vue'
 
 const timebar = ref()
 useGesture({
   onDrag: (ev) => limitMeasures.value = Math.round(limitMeasures.value + ev.delta[0])
-}, {
-  domTarget: timebar
-})
-
-const tempobar = ref()
-useGesture({
-  onDrag: (ev) => tempo.volume -= ev.delta[1] / 50,
-  onWheel: (ev) => { ev.event.preventDefault(); tempo.volume += ev.delta[1] / 100 }
-}, { domTarget: tempobar, eventOptions: { passive: false } })
-
-const synthVolume = ref()
-useGesture({
-  onDrag: (ev) => volume.value -= ev.delta[1] / 50,
-  onWheel: (ev) => { ev.event.preventDefault(); volume.value += ev.delta[1] / 100 }
-}, { domTarget: synthVolume, eventOptions: { passive: false } })
-
+}, { domTarget: timebar })
 
 </script>
 
 <template lang="pug">
 #screen.bg-light-900.dark-bg-dark-800
-  .flex.flex-col.gap-4.p-4.justify-stretch.relative.items-stretch.min-h-100vh.transition.duration-1000(
-  :style="{ backgroundImage: `linear-gradient(${colord(colorMix).alpha(.1).toHex()}, ${colord(colorMix).alpha(.9).toHex()})` }")
-    .flex.w-full.items-center
-      .flex.flex-col.gap-2
-        .flex.items-center
-          a.flex.items-center.gap-1.no-underline.text-sm.font-bold.op-40.hover-op-100.transition(href="https://chromatone.center/" target="_blank") 
-            img.w-4(src="/logo.svg")
-            .p-0.-mt-1px Chromatone
-          .op-30.mx-2
-            .i-la-times
-          a.flex.items-center.gap-1.no-underline.text-sm.font-bold.op-40.hover-op-100.transition(href="https://102records.ru/" target="_blank") 
-            img.w-20(src="/102_logo.svg")
+  .flex.flex.p-4.absolute.z-1000.top-2.bottom-2.right-2.left-2.bg-light-200.bg-op-80.backdrop-blur(v-show="!tempo.playing")
+    SplashScreen
 
-
-        .flex.items-baseline.gap-2
-          .text-4xl.font-bold RANDOM JAM
-          a.no-underline.op-50.hover-op-90.transition.text-sm(href="https://github.com/chromatone/random-jam/" target="_blank") v.{{ version }}
-      .flex-1
-      button.transition.duration-1000.bg-dark-400.p-4.rounded-full.shadow-xl.flex.gap-2(@click="randomize()" :style="{ backgroundColor: colorMix }" title="Randomize" aria-label="Randomize")
+      button.flex.items-center.transition.duration-1000.bg-dark-400.p-4.rounded-full.shadow-xl.flex.gap-2(@click="randomize()" :style="{ backgroundColor: colorMix }" title="Randomize" aria-label="Randomize")
         .p-0(:class="{ 'animate-spin': spin }")
           .i-system-uicons-reset.-scale-y-100.text-4xl
+        .text-2xl Start
 
+  .flex.flex-col.gap-4.p-4.justify-stretch.relative.items-stretch.min-h-100vh.transition.duration-1000(
+
+    :style="{ backgroundImage: `linear-gradient(${colord(colorMix).alpha(.1).toHex()}, ${colord(colorMix).alpha(.9).toHex()})` }")
+    .absolute.top-1.right-1
+      button.transition.text-xl.p-2.bg-light-300.bg-op-30.hover-bg-op-80.rounded-full(@click="tempo.playing = false")
+        .i-la-times
 
     .flex.flex-wrap.items-stretch.justify-between.gap-4
 
@@ -144,34 +119,15 @@ useGesture({
         :style="{ backgroundColor: tempoColor }"
         ) 
         .flex.items-center.py-2.font-bold.gap-1 
-          .text-6xl.op-80 {{ output.toFixed() }}&nbsp;BPM
+          .text-6xl.op-80 {{ smoothBPM.toFixed() }}&nbsp;BPM
           .p-1.transition.rounded-full.bg-dark-200(:style="{ opacity: tempo.blink ? tempo.volume : '0' }")
           .flex-1
-          .op-90.w-6.overflow-hidden.h-full.rounded-full.relative.border-2.border-dark-300.border-op-40.cursor-grab.active-cursor-grabbing(ref="tempobar")
-            .absolute.bottom-0.right-0.left-0.top-0.bg-dark-200.origin-bottom(:style="{transform:`scaleY(${tempo.volume})`}")
+          ControlRotary(v-model="tempo.volume" param="VOL" :max="1" :step="0.001")
 
           button.text-2xl.p-2.op-30.hover-op-50.active-op-100.transition(@click="tempo.mute = !tempo.mute")
             .i-hugeicons-volume-high(v-if="!tempo.mute")
             .i-hugeicons-volume-off(v-else)
-        .flex.flex-wrap.gap-4.text-center.relative.items-stretch.justify-stretch.flex-1.rounded-lg.bg-light-900.p-2(v-if="position")
-          .flex.flex-col.gap-2.w-full
-            .flex.flex-col.gap-2.w-full.h-full
-              .flex.gap-2.w-full(style="flex: 1 0 .25em")
-                .bit(
-                  v-for="i in 4" :style="{ backgroundColor: i - 1 == position[1] ? tempoColor : '#3332' }")
-
-              .flex.gap-2.w-full(style="flex: 1 0 .5em")
-                .bit(v-for="i in 4" :style="{ backgroundColor: i - 1 == position[0] % 4 ? tempoColor : '#3332' }")
-
-              .flex.gap-2.w-full(style="flex: 1 0 .75em")
-                .bit(v-for="i in 4" :style="{ backgroundColor: i - 1 == (Math.floor(position[0] / 4)) % 4 ? tempoColor : '#3332' }")
-
-              .flex.gap-2.w-full(style="flex: 1 0 1em")
-                .bit(v-for="i in 4" :style="{ backgroundColor: i - 1 == (Math.floor(position[0] / 4 / 4)) % 4 ? tempoColor : '#3332' }")
-
-              .flex.gap-2.w-full(style="flex: 1 0 1.25em")
-                .bit(v-for="i in 4" :style="{ backgroundColor: i - 1 == (Math.floor(position[0] / 4 / 4 / 4)) % 4 ? tempoColor : '#3332' }")
-
+        BeatBars(:position :color="tempoColor")
 
       .rounded-2xl.shadow.flex.flex-col(
         style="flex: 1 0 300px"
@@ -179,9 +135,8 @@ useGesture({
         ) 
         .flex.items-center.gap-1
           .text-6xl.font-bold.m-4.op-80 {{ globalScale.note.name }}  {{ globalScale?.set?.name }}
-          .flex-1 
-          .op-90.w-6.overflow-hidden.h-full.max-h-16.rounded-full.relative.border-2.border-dark-300.border-op-40.cursor-grab.active-cursor-grabbing(ref="synthVolume")
-            .absolute.bottom-0.right-0.left-0.top-0.bg-dark-200.origin-bottom(:style="{transform:`scaleY(${volume})`}")
+          .flex-1
+          ControlRotary(v-model="volume" param="VOL" :max="1" :step="0.001")
           button.text-2xl.p-2.px-4.op-30.hover-op-50.active-op-100.transition(@click="synthEnabled = !synthEnabled")
             .i-hugeicons-volume-high(v-if="synthEnabled")
             .i-hugeicons-volume-off(v-else)
