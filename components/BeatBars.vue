@@ -26,3 +26,9 @@ const props = defineProps({
         .flex.gap-2.w-full(style="flex: 1 0 1.25em")
           .bit(v-for="i in steps" :style="{ backgroundColor: i - 1 == (Math.floor(position[0] / steps / steps / steps)) % steps ? color : '#3332' }")
 </template>
+
+<style lang="postcss" scoped>
+.bit {
+  @apply flex-1 transition ease-in-out rounded border-0 border-dark-100 border-op-20 dark-border-light-900 dark-border-op-30
+}
+</style>

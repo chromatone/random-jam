@@ -1,109 +1,84 @@
-import { ref, computed } from 'vue'
-import { useStorage } from '@vueuse/core'
+import { computed, ref, watch } from 'vue'
+import { useClamp } from '@vueuse/math'
+import { useTimestamp } from '@vueuse/core'
+import { globalScale, useTempo, } from 'use-chromatone'
 import { ScaleType } from 'tonal'
-import { globalScale, useTempo } from 'use-chromatone'
 
-const minBpm = useStorage('jam-min-bpm', 80)
-const maxBpm = useStorage('jam-max-bpm', 140)
-const defaultMeasures = useStorage('jam-measures', 256)
-const state = ref('stopped') // 'stopped' | 'preparing' | 'playing'
-const startedAt = ref(null)
-const currentBpm = ref(100)
-const measures = ref(defaultMeasures.value)
+let initialized = false
 
-const initialized = ref(false)
+export function useJam() {
+  if (!initialized) {
+    watch(now, n => n > finishAt.value && (tempo.playing = false))
+  }
+  return {
+    tempo,
+    minTempo,
+    maxTempo,
+    spin,
+    startedAt,
+    limitMeasures,
+    scales,
+    seed,
+    randomScale,
+    randomize,
+    now,
+    position,
+    progress,
+    duration, dist, finishAt, fromStart, tillFinish
+  }
+}
 
 const tempo = useTempo()
 
+const minTempo = useClamp(70, 30, 100)
+const maxTempo = useClamp(140, minTempo, 200)
+
+const spin = ref(false)
+const startedAt = ref(Date.now())
+const limitMeasures = useClamp(256, 16, 1024)
+
 const scales = ScaleType.all()
-const currentScale = ref(null)
+const seed = ref(Math.random())
+const randomScale = computed(() => scales[Math.floor(seed.value * scales.length)])
 
-
-const sessionDuration = computed(() => {
-  if (!currentBpm.value || !measures.value) return 0
-  return (measures.value * 4 / currentBpm.value) * 60 * 1000 // in milliseconds
-})
-
-const progress = computed(() => {
-  if (!startedAt.value || state.value !== 'playing') return 0
-  const elapsed = Date.now() - startedAt.value
-  return Math.min(elapsed / sessionDuration.value, 1)
-})
-
-const timeRemaining = computed(() => {
-  if (!startedAt.value || state.value !== 'playing') return 0
-  const remaining = sessionDuration.value - (Date.now() - startedAt.value)
-  return Math.max(0, remaining)
-})
-
-// Actions
-const randomize = () => {
-  // Stop any existing playback
+function randomize(delay = 1000) {
+  if (spin.value) return
   tempo.stopped = true
-  tempo.playing = false
+  spin.value = true
 
-  // Generate new random values
-  currentBpm.value = Math.floor(minBpm.value + Math.random() * (maxBpm.value - minBpm.value))
-  tempo.bpm = currentBpm.value
+  tempo.bpm = Math.round(Math.random() * (maxTempo.value - minTempo.value) + minTempo.value)
 
-  // Select random scale with higher probability for major/minor
-  const rand = Math.random()
-  currentScale.value = rand < 0.3
-    ? scales.find(s => s.name === 'major')
-    : rand < 0.6
-      ? scales.find(s => s.name === 'minor')
-      : scales[Math.floor(Math.random() * scales.length)]
+  seed.value = Math.random()
 
-  // Apply scale
-  globalScale.chroma = currentScale.value.chroma
-  globalScale.tonic = Math.floor(Math.random() * 12)
+  globalScale.chroma = seed.value < 0.1 ? randomScale.value?.chroma : seed.value > .3 ? scales.find(s => s.name == 'minor').chroma : scales.find(s => s.name == 'major').chroma
+  globalScale.tonic = Math.round(Math.random() * 12)
 
-  // Update state
-  state.value = 'preparing'
+  setTimeout(() => {
+    spin.value = false
+    tempo.mute = false
+    tempo.playing = true
+    startedAt.value = Date.now()
+
+  }, delay)
+
 }
 
-const start = () => {
-  startedAt.value = Date.now()
-  state.value = 'playing'
-  tempo.playing = true
-}
+const now = useTimestamp()
 
-const stop = () => {
-  tempo.stopped = true
-  tempo.playing = false
-  state.value = 'stopped'
-  startedAt.value = null
-}
+const position = computed(() => tempo?.position?.split(':').map(Number))
 
-export const useJam = () => {
-  if (!initialized) {
-    watch(() => progress.value, (val) => {
-      if (val >= 1) {
-        stop()
-      }
-    })
-    initialized.value = true
-  }
+const progress = computed(() => position.value?.[0] / limitMeasures.value)
 
+const duration = computed(() => getMinutesSeconds(limitMeasures.value * 4 / tempo?.bpm))
 
-  return {
-    // State
-    state,
-    currentBpm,
-    currentScale,
-    measures,
-    progress,
-    timeRemaining,
-    startedAt,
+const dist = computed(() => getMillisecondsFromMinutes(limitMeasures.value * 4 / tempo?.bpm))
 
-    // Settings
-    minBpm,
-    maxBpm,
-    defaultMeasures,
+const finishAt = computed(() => startedAt.value + dist.value)
 
-    // Actions
-    randomize,
-    start,
-    stop,
-  }
-}
+const fromStart = computed(() => [Math.floor((now.value - startedAt.value) / (1000 * 60)), Math.round(((now.value - startedAt.value) % (1000 * 60)) / 1000)])
+
+const tillFinish = computed(() => [Math.floor((finishAt.value - now.value) / (1000 * 60)), Math.round(((finishAt.value - now.value) % (1000 * 60)) / 1000)])
+
+function getMinutesSeconds(decimalMinutes) { return [Math.floor(decimalMinutes), Math.round((decimalMinutes - Math.floor(decimalMinutes)) * 60)]; }
+
+function getMillisecondsFromMinutes(decimalMinutes) { return Math.round(decimalMinutes * 60 * 1000) }
