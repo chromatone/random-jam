@@ -13,40 +13,35 @@ import { colord } from 'colord'
 import { TransitionPresets, useTransition } from '@vueuse/core'
 import { useSoundFont } from 'use-chromatone'
 
-// Session parameters
-const minBpm = ref(70)
-const maxBpm = ref(140)
-const sessionLength = ref(5) // minutes
+const sessionMinutes = ref(5)
+const proMode = ref(false)
 
-// Clamp values for parameters
-const clampedMinBpm = useClamp(minBpm, 30, 100)
-const clampedMaxBpm = useClamp(maxBpm, clampedMinBpm, 200)
-const clampedSessionLength = useClamp(sessionLength, 1, 60)
+const seed = ref(Math.random())
 
-// Session state
+const minBpm = useClamp(70, 30, 100)
+const maxBpm = useClamp(140, minBpm, 200)
+const clampedSessionLength = useClamp(sessionMinutes, 1, 60)
+
 const tempo = useTempo()
 const startedAt = ref(0)
 const isSpinning = ref(false)
 const { synthEnabled, volume } = useSoundFont()
 
-// Time tracking
 const now = useTimestamp()
+
 const sessionEndTime = computed(() => startedAt.value + clampedSessionLength.value * 60 * 1000)
+
 const progress = computed(() =>
   startedAt.value ? Math.min((now.value - startedAt.value) / (sessionEndTime.value - startedAt.value), 1) : 0
 )
 
-// Scale generation
 const scales = ScaleType.all()
-const seed = ref(Math.random())
+
 const randomScale = computed(() => {
-  if (seed.value < 0.1) {
-    return scales[Math.floor(seed.value * scales.length)]
-  }
-  return scales.find(s => s.name === (seed.value > 0.3 ? 'major' : 'minor'))
+  if (proMode.value) return scales[Math.floor(seed.value * scales.length)]
+  return scales.find(s => s.name === (seed.value > .8 ? 'major' : 'minor'))
 })
 
-// UI colors
 const tempoColor = computed(() =>
   colord(noteColor(tempo.pitch, 2, 0.6))
     .lighten(0.3)
@@ -67,20 +62,18 @@ const colorMix = computed(() =>
     .toHex()
 )
 
-// Smooth BPM transition
 const smoothBPM = useTransition(() => tempo.bpm, {
   duration: 1000,
   transition: TransitionPresets.easeInOutCubic,
 })
 
-// Time formatting helper
+
 const formatTime = (ms) => {
   const minutes = Math.floor(ms / 60000)
   const seconds = Math.round((ms % 60000) / 1000)
   return `${minutes}m ${seconds}s`
 }
 
-// Session time displays
 const elapsedTime = computed(() =>
   startedAt.value ? formatTime(now.value - startedAt.value) : '0s'
 )
@@ -91,7 +84,6 @@ const remainingTime = computed(() =>
 
 const position = computed(() => tempo?.position?.split(':').map(Number))
 
-// Start new session
 function startSession() {
   if (isSpinning.value) return
 
@@ -100,13 +92,11 @@ function startSession() {
   tempo.mute = false
   tempo.stopped = true
 
-  // Generate random parameters
-  tempo.bpm = Math.round(Math.random() * (clampedMaxBpm.value - clampedMinBpm.value) + clampedMinBpm.value)
+  tempo.bpm = Math.round(Math.random() * (maxBpm.value - minBpm.value) + minBpm.value)
   seed.value = Math.random()
   globalScale.chroma = randomScale.value?.chroma
-  globalScale.tonic = Math.round(Math.random() * 12)
+  globalScale.tonic = Math.round(seed.value * 12)
 
-  // Start session after delay
   setTimeout(() => {
     isSpinning.value = false
     tempo.playing = true
@@ -127,7 +117,12 @@ watch(now, () => {
 #screen.bg-light-900.dark-bg-dark-800 
   .flex.flex.p-4.absolute.z-1000.top-2.bottom-2.right-2.left-2.bg-light-200.bg-op-98.op-0.rounded-xl.shadow-xl.transition.duration-1000.backdrop-blur-0(v-show="!tempo.playing" :class="{ 'backdrop-blur-xl op-100': !tempo.playing && !isSpinning }")
     SplashScreen
-      ControlRotary.scale-125(v-model="clampedSessionLength" :min="1" :max="60" param="Duration" :fixed="0" unit="min")
+      .flex.items-center.gap-4
+        ControlRotary.scale-125(v-model="clampedSessionLength" :min="1" :max="60" param="Duration" :fixed="0" unit="min")
+        label.flex.flex.gap-6.items-center.border-1.p-4.rounded-xl(for="proMode")
+          .text-lg.font-bold Pro Mode 
+          input#proMode.scale-150.mr-2(type="checkbox" switch v-model="proMode")
+
       button.flex.items-center.transition.duration-1000.bg-dark-400.p-4.rounded-2xl.shadow-xl.flex.gap-2(@click="startSession()" :style="{ backgroundColor: colorMix }" title="Randomize" aria-label="Randomize")
         .p-0(:class="{ 'animate-spin': isSpinning }")
           .i-system-uicons-reset.-scale-y-100.text-4xl
