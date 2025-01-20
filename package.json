@@ -2,7 +2,7 @@
 	"name": "chromatone-random-jam",
 	"description": "Jam Randomizer Web App",
 	"private": true,
-	"version": "0.2.0",
+	"version": "0.2.1",
 	"year": 2024,
 	"homepage": "https://random.chromatone.center",
 	"repository": {
