@@ -141,10 +141,10 @@ watch(now, () => {
         :style="{ backgroundColor: tempoColor }"
         )  
         .flex.items-center.font-bold.gap-1 
-          .text-6xl.op-80 {{ smoothBPM.toFixed() }}&nbsp;BPM
+          .text-8vw.op-80 {{ smoothBPM.toFixed() }}&nbsp;BPM
           .p-1.transition.rounded-full.bg-dark-200(:style="{ opacity: tempo.blink ? 1 : '0' }")
           .flex-1
-          ControlRotary(v-model="tempo.volume" param="VOL" :max="1" :step="0.001")
+          ControlRotary.absolute(v-model="tempo.volume" param="VOL" :max="1" :step="0.001")
         BeatBars(:position :color="tempoColor")
 
       .rounded-2xl.shadow.flex.flex-col(
@@ -152,7 +152,7 @@ watch(now, () => {
         :style="{ backgroundColor: tonicColor }"
         ) 
         .flex.items-center.gap-1
-          .text-6xl.font-bold.m-4.op-80 {{ globalScale.note.name }}  {{ globalScale?.set?.name }}
+          .text-8vw.font-bold.m-4.op-80.leading-7vw {{ globalScale.note.name }}&nbsp;{{ globalScale?.set?.name }}
           .flex-1
           ControlRotary(v-model="volume" param="VOL" :max="1" :step="0.001")
         .flex-1
@@ -162,14 +162,14 @@ watch(now, () => {
           :pitch="globalScale.tonic")
 
 
-    .overflow-clip.rounded-2xl.flex.flex-col.items-center.border-8.relative.bg-light-900.bg-op-40.py-6.text-4xl.font-bold.flex-1(
+    .min-h-2em.text-8vw.tabular-nums.overflow-clip.rounded-2xl.flex.flex-col.items-center.border-8.relative.bg-light-900.bg-op-40.py-6.font-bold.flex-1(
       :style="{ borderColor: colorMix }"
       )
-      .absolute.left-2.z-10.top-2  {{ elapsedTime }}
+      .absolute.left-2.z-10.top-2.op-80  {{ elapsedTime }}
       .absolute.mx-auto.z-10.top-2.text-center.text-lg.font-normal.flex.flex-col 
 
 
-      .absolute.right-2.z-10.top-2 -{{ remainingTime }}
+      .absolute.right-2.z-10.top-2.op-80 -{{ remainingTime }}
 
       .bg-dark-400.transition.duration-300.top-0.bottom-0.left-0.absolute.flex.items-center(:style="{ backgroundColor: colord(colorMix).darken(.1).toHex(), width: `${progress * 100}%` }")
 </template>
