@@ -18,6 +18,7 @@ const proMode = ref(false)
 
 const seed = ref(Math.random())
 
+
 const minBpm = useClamp(70, 30, 100)
 const maxBpm = useClamp(140, minBpm, 200)
 const clampedSessionLength = useClamp(sessionMinutes, 1, 60)
@@ -26,6 +27,20 @@ const tempo = useTempo()
 const startedAt = ref(0)
 const isSpinning = ref(false)
 const { synthEnabled, volume } = useSoundFont()
+
+// const totalBeats = computed(() => sessionMinutes.value * tempo.bpm)
+
+// const timeline = computed(() => {
+
+//   const line = [seed.value * .3]
+//   let total = 0
+//   while (total < 1) {
+//     let rn = .03 + Math.random() * .3
+//     total += rn
+//     line.push(total)
+//   }
+//   return line.map(l => l * 100)
+// })
 
 const now = useTimestamp()
 
@@ -97,6 +112,7 @@ function startSession() {
   globalScale.chroma = randomScale.value?.chroma
   globalScale.tonic = Math.round(seed.value * 12)
 
+
   setTimeout(() => {
     isSpinning.value = false
     tempo.playing = true
@@ -104,12 +120,13 @@ function startSession() {
   }, 1000)
 }
 
-// Stop session when time is up
-watch(now, () => {
-  if (startedAt.value && now.value >= sessionEndTime.value) {
-    tempo.playing = false
-  }
-})
+
+// watch(now, () => {
+//   if (startedAt.value && now.value >= sessionEndTime.value) {
+//     tempo.playing = false
+//   }
+// })
+
 
 </script>
 
@@ -162,14 +179,15 @@ watch(now, () => {
           :pitch="globalScale.tonic")
 
 
-    .min-h-2em.text-8vw.tabular-nums.overflow-clip.rounded-2xl.flex.flex-col.items-center.border-8.relative.bg-light-900.bg-op-40.py-6.font-bold.flex-1(
+    .min-h-2em.text-8vw.tabular-nums.overflow-clip.rounded-2xl.flex.items-stretch.border-8.relative.bg-light-900.bg-op-40.font-bold.flex-1(
       :style="{ borderColor: colorMix }"
       )
-      .absolute.left-2.z-10.top-2.op-80  {{ elapsedTime }}
+      .absolute.left-2.z-10.top-8.op-80  {{ elapsedTime }}
       .absolute.mx-auto.z-10.top-2.text-center.text-lg.font-normal.flex.flex-col 
 
+      //- .border-1.text-xl.z-10.p-2(inert v-for="part in timeline" :key="part" :style="{ flex: `${part}` }") 
 
-      .absolute.right-2.z-10.top-2.op-80 -{{ remainingTime }}
+      .absolute.right-2.z-10.top-8.op-80 {{ remainingTime == '0m 0s' ? 'FINISH' : `-${remainingTime}` }}
 
       .bg-dark-400.transition.duration-300.top-0.bottom-0.left-0.absolute.flex.items-center(:style="{ backgroundColor: colord(colorMix).darken(.1).toHex(), width: `${progress * 100}%` }")
 </template>
