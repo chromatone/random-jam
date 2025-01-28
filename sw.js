@@ -1,4 +1,4 @@
-const CACHE_NAME = 'chromatone-random-jam-v.0.2.2';
+const CACHE_NAME = 'chromatone-random-jam-v.0.3.0';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
