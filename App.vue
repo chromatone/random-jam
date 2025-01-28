@@ -182,12 +182,12 @@ function startSession() {
     .min-h-2em.text-8vw.tabular-nums.overflow-clip.rounded-2xl.flex.items-stretch.border-8.relative.bg-light-900.bg-op-40.font-bold.flex-1(
       :style="{ borderColor: colorMix }"
       )
-      .absolute.left-2.z-10.top-8.op-80  {{ elapsedTime }}
-      .absolute.mx-auto.z-10.top-2.text-center.text-lg.font-normal.flex.flex-col 
+      .absolute.left-2.z-10.top-4.op-80  {{ elapsedTime }}
+      //- .absolute.mx-auto.z-10.top-2.text-center.text-lg.font-normal.flex.flex-col 
 
-      //- .border-1.text-xl.z-10.p-2(inert v-for="part in timeline" :key="part" :style="{ flex: `${part}` }") 
+      //- .border-r-2.op-40.text-sm.flex.items-end.border-dark.z-10.h-20.mt-auto(inert v-for="(part, p) in sessionMinutes" :key="part" :style="{ flex: '1 0' }") 
 
-      .absolute.right-2.z-10.top-8.op-80 {{ remainingTime == '0m 0s' ? 'FINISH' : `-${remainingTime}` }}
+      .absolute.right-2.z-10.top-4.op-80.cursor-pointer(@click="remainingTime == '0m 0s' ? tempo.playing = false : ''") {{ remainingTime == '0m 0s' ? 'FINISH' : `-${remainingTime}` }}
 
       .bg-dark-400.transition.duration-300.top-0.bottom-0.left-0.absolute.flex.items-center(:style="{ backgroundColor: colord(colorMix).darken(.1).toHex(), width: `${progress * 100}%` }")
 </template>
