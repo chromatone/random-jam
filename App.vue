@@ -143,7 +143,7 @@ tempo.bpm = stratifiedRandom(minBpm.value, maxBpm.value);
 #screen.bg-light-900.dark-bg-dark-800.transition
 
   .flex.flex-col.p-4.absolute.z-1000.top-2.bottom-2.right-2.left-2.bg-op-40.op-0.rounded-xl.shadow-xl.transition.duration-1000.backdrop-blur-0.bg-light-900.dark-bg-dark-800.dark-bg-op-90.dark-text-light(v-if="!ready && !tempo.playing" :class="{ 'backdrop-blur-xl op-100': !tempo.playing && !isSpinning }")
-    .absolute.top-2.left-2.z-1000
+    .absolute.top-7.left-4.z-1000
       button.dark-text-white.p-2.text-xl(@click="dark = !dark", aria-label="Toggle dark mode" )
         .i-carbon-moon(v-show="dark")
         .i-ion-ios-sunny(v-show="!dark")
